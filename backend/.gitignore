@@ -36,3 +36,9 @@ backend/index-chroma/
 /backend/data/*.jsonl
 /index-chroma/
 /backend/index-chroma/
+
+# Generated corpora & indexes
+/data/*.jsonl
+/backend/data/*.jsonl
+/index-chroma/
+/backend/index-chroma/
