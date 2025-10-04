@@ -22,3 +22,7 @@ data/*.txt
 # OS junk files
 .DS_Store
 Thumbs.db
+
+# Generated corpora & indexes
+backend/data/*.jsonl
+backend/index-chroma/
