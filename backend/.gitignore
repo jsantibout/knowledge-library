@@ -26,3 +26,7 @@ Thumbs.db
 # Generated corpora & indexes
 backend/data/*.jsonl
 backend/index-chroma/
+
+# Generated corpora & indexes
+backend/data/*.jsonl
+backend/index-chroma/
