@@ -8,7 +8,7 @@ python embed_local.py
 python query_local.py
 
 
-or for the rag file:
+or for the rag file here:
 python harvest.py
 python embed_local.py
 
