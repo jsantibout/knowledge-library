@@ -1,0 +1,44 @@
+# Environment
+.venv/
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Data & index files
+index-faiss/
+index-chroma/
+data/*.csv
+data/*.pdf
+data/*.txt
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# Generated corpora & indexes
+backend/data/*.jsonl
+backend/index-chroma/
+
+# Generated corpora & indexes
+backend/data/*.jsonl
+backend/index-chroma/
+
+# Generated corpora & indexes
+/data/*.jsonl
+/backend/data/*.jsonl
+/index-chroma/
+/backend/index-chroma/
+
+# Generated corpora & indexes
+/data/*.jsonl
+/backend/data/*.jsonl
+/index-chroma/
+/backend/index-chroma/
