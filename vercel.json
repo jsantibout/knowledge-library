@@ -1,0 +1,21 @@
+{
+  "functions": {
+    "app/api/backend/health.py": {
+      "runtime": "python3.9"
+    },
+    "app/api/backend/ask.py": {
+      "runtime": "python3.9"
+    },
+    "app/api/backend/search.py": {
+      "runtime": "python3.9"
+    }
+  },
+  "env": {
+    "INDEX_DIR": "backend/index-chroma",
+    "EMBED_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
+    "COLLECTION_NAME": "spacebio",
+    "DEFAULT_K": "4",
+    "FETCH_K": "16",
+    "OPENAI_MODEL": "gpt-4o-mini"
+  }
+}
