@@ -81,7 +81,13 @@ export async function POST(req: NextRequest) {
         }
 
 
-        const ragResponse = await fetch(`${RAG_BACKEND_URL}/ask`, {
+        // Determine the correct backend URL based on environment
+        const isProduction = process.env.NODE_ENV === 'production';
+        const backendUrl = isProduction 
+            ? `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/backend/ask`
+            : (RAG_BACKEND_URL || 'http://localhost:8000/ask');
+
+        const ragResponse = await fetch(backendUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             cache: "no-store",
