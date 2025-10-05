@@ -15,6 +15,10 @@ from langchain.chains import create_retrieval_chain
 from dotenv import load_dotenv
 load_dotenv()
 
+import logging
+logger = logging.getLogger("uvicorn.error")
+
+
 # -------- CONFIG --------
 INDEX_DIR   = os.getenv("INDEX_DIR", "index-chroma")
 MODEL_NAME  = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
@@ -121,18 +125,73 @@ def search(body: SearchRequest):
 
 @app.post("/ask")
 def ask(body: AskRequest):
-    if not rag_chain:
-        k = body.k or DEFAULT_K
-        docs = retriever.invoke(body.question)
+    k = body.k or DEFAULT_K
+
+    def _retrieval_only_answer(prefix: str):
+        docs = retriever.invoke(body.question) or []
         docs = prioritize_sections(docs)[:k]
         bullets = []
         for i, d in enumerate(docs, 1):
-            sec = d.metadata.get("section", "fulltext")
-            bullets.append(f"[{i}] ({sec}) {d.page_content.strip()[:350]}")
-        answer = (
-            "Preliminary synthesis (retrieval-only; add OPENAI_API_KEY for LLM summary):\n\n"
-            + "\n\n".join(bullets)
+            sec = (d.metadata.get("section") or "fulltext")
+            text = (d.page_content or "").strip()[:350]
+            bullets.append(f"[{i}] ({sec}) {text}")
+        return {
+            "query": body.question,
+            "k": k,
+            "answer": (
+                f"{prefix}\n\n" +
+                ("\n\n".join(bullets) if bullets else "No matching passages found.")
+            ),
+            "sources": [
+                {
+                    "label":   f"[{i+1}]",
+                    "title":   d.metadata.get("title"), 
+                    "url":     d.metadata.get("url"),
+                    "section": d.metadata.get("section", "fulltext"),
+                }
+                for i, d in enumerate(docs)
+            ],
+        }
+
+    # 1) If no LLM configured, retrieval-only
+    if not rag_chain:
+        logger.info("/ask: rag_chain is None -> retrieval-only")
+        return _retrieval_only_answer("Preliminary synthesis (retrieval-only; set OPENAI_API_KEY to enable LLM):")
+
+    # 2) LLM path with defensive parsing + fallback
+    try:
+        result = rag_chain.invoke({"input": body.question}) or {}
+        # Log keys so we can see what came back
+        logger.info("/ask: rag_chain result keys: %s", list(result.keys()))
+
+        # LangChain can return different shapes depending on version/chain:
+        # try several common fields
+        answer_text = (
+            result.get("answer")
+            or result.get("output_text")
+            or result.get("result")
+            or ""
         )
+
+        # context docs may be under 'context' or 'source_documents'
+        ctx_docs = result.get("context")
+        if ctx_docs is None:
+            ctx_docs = result.get("source_documents")
+        if ctx_docs is None:
+            ctx_docs = []
+
+        # Ensure list
+        if not isinstance(ctx_docs, list):
+            logger.warning("/ask: context is not a list; got type=%s", type(ctx_docs))
+            ctx_docs = []
+
+        ctx_docs = prioritize_sections(ctx_docs)[:k]
+
+        # If for some reason there’s no answer, still return snippets
+        if not answer_text.strip():
+            logger.warning("/ask: empty answer_text; falling back to retrieval-only text synthesis")
+            return _retrieval_only_answer("LLM returned no text. Showing retrieval-only synthesis:")
+
         sources = [
             {
                 "label":   f"[{i+1}]",
@@ -140,25 +199,11 @@ def ask(body: AskRequest):
                 "url":     d.metadata.get("url"),
                 "section": d.metadata.get("section", "fulltext"),
             }
-            for i, d in enumerate(docs)
+            for i, d in enumerate(ctx_docs)
         ]
-        return {"query": body.question, "k": k, "answer": answer, "sources": sources}
 
-    # LLM-enabled RAG path
-    result = rag_chain.invoke({"input": body.question})
-    # result contains "answer" and "context" (list of Documents)
-    answer_text = result.get("answer") or result.get("output_text") or ""
-    ctx_docs = result.get("context", [])
+        return {"query": body.question, "k": k, "answer": answer_text, "sources": sources}
 
-    # consistent citations ordering
-    ctx_docs = prioritize_sections(ctx_docs)
-
-    sources = [
-        {
-            "label":   f"[{i+1}]",
-            "title":   d.metadata.get("title"),
-            "url":     d.metadata.get("url"),
-            "section": d.metadata.get("section", "fulltext"),
-        }
-        for i, d in enumerate(ctx_docs[: body.k or DEFAULT_K])
-    ]
+    except Exception as e:
+        logger.exception("/ask: LLM failed; falling back. %s", e)
+        return _retrieval_only_answer("LLM unavailable (quota/error). Showing retrieval-only synthesis:")
