@@ -8,3 +8,5 @@ pandas
 beautifulsoup4
 fastapi
 uvicorn
+chromadb
+trafilatura
