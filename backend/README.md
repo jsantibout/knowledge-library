@@ -14,9 +14,14 @@ python harvest.py
 python embed_local.py
 
 uvicorn rag_service:app --reload
+curl -s http://127.0.0.1:8000/health | jq .
 
-curl -X POST localhost:8000/search -H "Content-Type: application/json"      -d '{"question":"How does microgravity affect gene expression in plants?"}' | jq .
- or 
-curl -X POST localhost:8000/search -H "Content-Type: application/json"      -d '{"question":"How does microgravity affect gene expression in plants?"}' 
+curl -s -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question":"How does spaceflight impact immune response in astronauts?"}' | jq .
+
+curl -s -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question":"What are the main effects of microgravity on cardiovascular remodeling?"}' | jq .
 
 ```
