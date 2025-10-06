@@ -1,4 +1,4 @@
-# 🧠 SpaceBio Knowledge Library
+# SpaceBio Knowledge Library
 
 ## Description
 
@@ -7,19 +7,17 @@ It enables users to explore NASA bioscience data, ask intelligent questions, and
 
 ---
 
-## ✨ Features
+## Features
 
-- **RAG Search & Query** – Retrieve and summarize scientific literature with AI.
-- **Ask AI Anything** – Get contextual responses sourced from real NASA bioscience documents.
-- **Visual Generation Mode** – Generate manga or coloring-style educational illustrations.
-- **Dark / Light Mode** – Optimized for classrooms and research environments.
-- **Health Check Monitor** – Instantly verify backend connectivity and model availability.
-- **Tabbed Interface** – Switch between *Search*, *Ask*, and *Visualize* effortlessly.
-- **Responsive Design** – Clean, professional interface across desktop and mobile devices.
+- **Retrieval-Augmented Generation (RAG)** – Retrieve and summarize scientific literature with AI.
+- **AI Answering** – Get contextual responses sourced from real NASA bioscience documents.
+- **Visualization Tools** – Generate educational visuals for scientific concepts.
+- **Manga Generation Mode** – Create manga-inspired educational panels.
+- **Coloring Book Mode** – Generate coloring-style illustrations from scientific queries.
 
 ---
 
-## 🧩 Tech Stack
+## Tech Stack
 
 **Frontend**
 - Next.js (App Router)
@@ -33,9 +31,9 @@ It enables users to explore NASA bioscience data, ask intelligent questions, and
 
 ---
 
-## ⚙️ Setup Instructions
+## Setup Instructions
 
-### 1️⃣ Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/yourusername/spacebio-knowledge-library.git
@@ -44,7 +42,7 @@ cd spacebio-knowledge-library
 
 ---
 
-### 2️⃣ Install Frontend Dependencies
+### 2. Install Frontend Dependencies
 
 ```bash
 npm install
@@ -52,7 +50,7 @@ npm install
 
 ---
 
-### 3️⃣ Set Up Environment Variables
+### 3. Set Up Environment Variables
 
 Copy the example environment file:
 
@@ -73,20 +71,20 @@ VERCEL_URL=
 
 ---
 
-### 4️⃣ Start the Development Server
+### 4. Start the Development Server
 
 ```bash
 npm run dev
 ```
 
 Your app will be available at:  
-👉 [http://localhost:3000](http://localhost:3000)
+[http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🧠 Backend Setup (RAG Service)
+## Backend Setup (RAG Service)
 
-### 1️⃣ Navigate to the Backend Folder
+### 1. Navigate to the Backend Folder
 
 ```bash
 cd backend
@@ -94,7 +92,7 @@ cd backend
 
 ---
 
-### 2️⃣ Create and Activate a Virtual Environment
+### 2. Create and Activate a Virtual Environment
 
 ```bash
 python3 -m venv .venv
@@ -103,7 +101,7 @@ source .venv/bin/activate
 
 ---
 
-### 3️⃣ Install Dependencies
+### 3. Install Dependencies
 
 ```bash
 pip install --upgrade pip
@@ -112,7 +110,7 @@ pip install -r requirements.txt
 
 ---
 
-### 4️⃣ Configure Backend Environment Variables
+### 4. Configure Backend Environment Variables
 
 Create a `.env` file in `/backend` and add:
 
@@ -124,7 +122,7 @@ OPENAI_CHAT_MODEL=gpt-4o-mini
 
 ---
 
-### 5️⃣ Run the Data Embedding Pipeline
+### 5. Run the Data Embedding Pipeline
 
 ```bash
 python harvest.py
@@ -133,7 +131,7 @@ python embed_local.py
 
 ---
 
-### 6️⃣ Launch the RAG Service
+### 6. Launch the RAG Service
 
 ```bash
 uvicorn rag_service:app --reload
@@ -141,17 +139,9 @@ uvicorn rag_service:app --reload
 
 ---
 
-## 🧪 Testing & Example Commands
+## Example Commands
 
-### ✅ Health Check
-
-```bash
-curl -s http://127.0.0.1:8000/health | jq .
-```
-
----
-
-### 💬 Example Query
+### Example Query
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/ask   -H "Content-Type: application/json"   -d '{"question":"How does spaceflight impact immune response in astronauts?"}' | jq .
@@ -159,7 +149,7 @@ curl -s -X POST http://127.0.0.1:8000/ask   -H "Content-Type: application/json" 
 
 ---
 
-### 🧬 Another Example Query
+### Another Example Query
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/ask   -H "Content-Type: application/json"   -d '{"question":"What are the main effects of microgravity on cardiovascular remodeling?"}' | jq .
@@ -167,7 +157,7 @@ curl -s -X POST http://127.0.0.1:8000/ask   -H "Content-Type: application/json" 
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 spacebio-knowledge-library/
@@ -189,24 +179,24 @@ spacebio-knowledge-library/
 
 ---
 
-## 🔭 Example Workflow
+## Example Workflow
 
 1. Enter a query such as  
-   **“How does microgravity affect bone density in astronauts?”**  
+   “How does microgravity affect bone density in astronauts?”  
 2. Use **Ask AI** for an intelligent, source-based explanation.  
-3. Switch to **Visualize Mode** to generate an educational illustration.  
-4. Download or share your AI-generated educational manga panels.
+3. Switch to **Visualize Mode** to generate an educational manga panel or coloring page.  
+4. Explore and use the generated educational visuals in your research or classroom.
 
 ---
 
-## 👥 Contributors & Credits
+## Contributors & Credits
 
 Developed by **Vincent Truong** and team.  
 Powered by **NASA Open Data**, **FastAPI**, and **OpenAI GPT Models**.
 
 ---
 
-## 📜 License
+## License
 
 This project is released under the **MIT License**.  
 Feel free to use, modify, and contribute for educational and research purposes.
