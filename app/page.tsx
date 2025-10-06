@@ -201,30 +201,65 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            SpaceBio Knowledge Library
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Search and query NASA bioscience research documents
-          </p>
-
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+      <div className="container mx-auto px-6 py-12 max-w-7xl">
+        {/* Hero Header */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--accent-blue)] to-[var(--accent-teal)] flex items-center justify-center shadow-lg">
+              <span className="text-2xl">🧬</span>
+            </div>
+            <div className="text-left">
+              <h1 className="text-scientific-title youth-accent">
+                SpaceBio Knowledge Library
+              </h1>
+              <p className="text-scientific-caption text-[var(--foreground-secondary)] mt-1">
+                Research • Discover • Learn
+              </p>
+            </div>
+          </div>
+          
+          <div className="max-w-2xl mx-auto">
+            <p className="text-scientific-subtitle mb-6">
+              Unlock NASA bioscience research through AI-powered educational manga and coloring books designed to inspire the next generation of scientists
+            </p>
+            
+            {/* Mission Statement Badges */}
+            <div className="flex flex-wrap justify-center gap-3 mb-8">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-[var(--border-subtle)] bg-white/50 backdrop-blur-sm">
+                <span className="w-2 h-2 rounded-full bg-[var(--accent-coral)]"></span>
+                Scientific Research
+              </span>
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-[var(--border-subtle)] bg-white/50 backdrop-blur-sm">
+                <span className="w-2 h-2 rounded-full bg-[var(--accent-yellow)]"></span>
+                AI-Powered Learning
+              </span>
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border border-[var(--border-subtle)] bg-white/50 backdrop-blur-sm">
+                <span className="w-2 h-2 rounded-full bg-[var(--accent-purple)]"></span>
+                Youth Education
+              </span>
+            </div>
+          </div>
+          
           {/* Health Status */}
           {healthStatus && (
-            <div className={`mt-4 p-3 rounded-lg ${healthStatus.ok
-              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-              }`}>
-              <div className="flex items-center justify-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${healthStatus.ok ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <div className={`inline-flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-sm ${
+              healthStatus.ok 
+                ? 'status-connected' 
+                : 'status-disconnected'
+            }`}>
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${healthStatus.ok ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
                 <span className="text-sm font-medium">
-                  Backend {healthStatus.ok ? 'Connected' : 'Disconnected'}
-                  {healthStatus.llm_enabled && ' • LLM Enabled'}
+                  System {healthStatus.ok ? 'Online' : 'Offline'}
                 </span>
               </div>
+              {healthStatus.llm_enabled && (
+                <>
+                  <div className="w-1 h-1 rounded-full bg-current opacity-50"></div>
+                  <span className="text-xs font-medium opacity-75">AI Ready</span>
+                </>
+              )}
             </div>
           )}
 
@@ -236,134 +271,269 @@ export default function Home() {
           )}
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm">
-            <button
-              onClick={() => setActiveTab('search')}
-              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'search'
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+        {/* Research Mode Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="glass-effect rounded-2xl p-2 shadow-lg">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setActiveTab('search')}
+                className={`relative px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'search'
+                    ? 'bg-[var(--accent-blue)] text-[var(--foreground)] shadow-md transform scale-105'
+                    : 'text-[var(--foreground-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--hover-overlay)]'
                 }`}
-            >
-              Search Documents
-            </button>
-            <button
-              onClick={() => setActiveTab('ask')}
-              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'ask'
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              >
+                <span className="text-lg">🔍</span>
+                <span>Search</span>
+                {activeTab === 'search' && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[var(--accent-coral)] rounded-full"></div>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('ask')}
+                className={`relative px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'ask'
+                    ? 'bg-[var(--accent-teal)] text-[var(--foreground)] shadow-md transform scale-105'
+                    : 'text-[var(--foreground-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--hover-overlay)]'
                 }`}
-            >
-              Ask AI
-            </button>
-            <button
-              onClick={() => setActiveTab('visualize')}
-              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'visualize'
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+              >
+                <span className="text-lg">🤖</span>
+                <span>Ask AI</span>
+                {activeTab === 'ask' && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[var(--accent-coral)] rounded-full"></div>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('visualize')}
+                className={`relative px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === 'visualize'
+                    ? 'bg-[var(--accent-purple)] text-[var(--foreground)] shadow-md transform scale-105'
+                    : 'text-[var(--foreground-secondary)] hover:text-[var(--foreground)] hover:bg-[var(--hover-overlay)]'
                 }`}
-            >
-              🎨 Visualize
-            </button>
+              >
+                <span className="text-lg">🎨</span>
+                <span>Visualize</span>
+                {activeTab === 'visualize' && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[var(--accent-coral)] rounded-full"></div>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Search/Ask/Visualize Form */}
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-8">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={
-                activeTab === 'search'
-                  ? "Search for documents..."
-                  : activeTab === 'ask'
-                    ? "Ask a question about space biology..."
-                    : "Ask a question to generate educational images..."
-              }
-              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={loading || !query.trim()}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? '...' : activeTab === 'search' ? 'Search' : activeTab === 'ask' ? 'Ask' : 'Visualize'}
-            </button>
+        {/* Mode Description */}
+        <div className="text-center mb-8">
+          <div className="max-w-md mx-auto">
+            {activeTab === 'search' && (
+              <p className="text-scientific-body text-[var(--foreground-secondary)]">
+                <span className="font-semibold text-[var(--accent-blue)]">Scientific Search:</span> Find relevant NASA bioscience research documents using semantic search
+              </p>
+            )}
+            {activeTab === 'ask' && (
+              <p className="text-scientific-body text-[var(--foreground-secondary)]">
+                <span className="font-semibold text-[var(--accent-teal)]">AI Research Assistant:</span> Ask questions and get comprehensive answers backed by scientific sources
+              </p>
+            )}
+            {activeTab === 'visualize' && (
+              <p className="text-scientific-body text-[var(--foreground-secondary)]">
+                <span className="font-semibold text-[var(--accent-purple)]">Educational Visualizer:</span> Generate manga panels or coloring books to make science accessible and fun
+              </p>
+            )}
           </div>
+        </div>
 
-          {/* Visualize-specific controls */}
-          {activeTab === 'visualize' && (
-            <div className="mt-4 flex gap-4 items-center justify-center">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Style:</label>
-                <select
-                  value={visualizeMode}
-                  onChange={(e) => setVisualizeMode(e.target.value as 'manga' | 'coloring')}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="manga">Manga</option>
-                  <option value="coloring">Coloring Book</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Images:</label>
+        {/* Research Query Interface */}
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto mb-12">
+          <div className="scientific-card p-6">
+            <div className="flex gap-3 mb-4">
+              <div className="flex-1 relative">
                 <input
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={imageCount}
-                  onChange={(e) => setImageCount(parseInt(e.target.value || "1", 10))}
-                  className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={
+                    activeTab === 'search' 
+                      ? "Search NASA bioscience research documents..." 
+                      : activeTab === 'ask'
+                      ? "Ask a question about space biology research..."
+                      : "Describe what you'd like to learn about for educational visualization..."
+                  }
+                  className="input-scientific text-lg py-4 pr-12"
+                  disabled={loading}
                 />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[var(--foreground-secondary)] hover:text-[var(--foreground)] transition-colors"
+                  >
+                    <span className="text-lg">×</span>
+                  </button>
+                )}
               </div>
+              <button
+                type="submit"
+                disabled={loading || !query.trim()}
+                className={`btn-scientific-primary px-8 py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${
+                  loading ? 'animate-pulse' : ''
+                }`}
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="loading-spinner"></div>
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span>
+                      {activeTab === 'search' ? '🔍' : activeTab === 'ask' ? '🤖' : '🎨'}
+                    </span>
+                    <span>
+                      {activeTab === 'search' ? 'Search' : activeTab === 'ask' ? 'Ask AI' : 'Visualize'}
+                    </span>
+                  </div>
+                )}
+              </button>
             </div>
-          )}
+            
+            {/* Visualize-specific controls */}
+            {activeTab === 'visualize' && (
+              <div className="flex flex-wrap gap-6 items-center justify-center pt-4 border-t border-[var(--border-subtle)]">
+                <div className="flex items-center gap-3">
+                  <label className="text-scientific-caption font-semibold text-[var(--foreground)]">
+                    Art Style:
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setVisualizeMode('manga')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        visualizeMode === 'manga'
+                          ? 'bg-[var(--accent-purple)] text-white shadow-md'
+                          : 'bg-[var(--background-secondary)] text-[var(--foreground-secondary)] hover:bg-[var(--hover-overlay)]'
+                      }`}
+                    >
+                      📚 Manga Style
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVisualizeMode('coloring')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        visualizeMode === 'coloring'
+                          ? 'bg-[var(--accent-purple)] text-white shadow-md'
+                          : 'bg-[var(--background-secondary)] text-[var(--foreground-secondary)] hover:bg-[var(--hover-overlay)]'
+                      }`}
+                    >
+                      🎨 Coloring Book
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-scientific-caption font-semibold text-[var(--foreground)]">
+                    Images:
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setImageCount(num)}
+                        className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
+                          imageCount === num
+                            ? 'bg-[var(--accent-coral)] text-white shadow-md transform scale-110'
+                            : 'bg-[var(--background-secondary)] text-[var(--foreground-secondary)] hover:bg-[var(--hover-overlay)]'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </form>
 
-        {/* Results */}
+        {/* Loading State */}
         {loading && (
-          <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-              {activeTab === 'search' ? 'Searching documents...' :
-                activeTab === 'ask' ? 'Generating answer...' :
-                  'Generating educational images...'}
-            </p>
+          <div className="text-center py-16">
+            <div className="scientific-card max-w-md mx-auto p-8">
+              <div className="flex flex-col items-center gap-6">
+                <div className="relative">
+                  <div className="loading-spinner w-12 h-12"></div>
+                  <div className="absolute inset-0 w-12 h-12 border-2 border-transparent border-t-[var(--accent-coral)] rounded-full animate-spin" style={{ animationDelay: '0.5s' }}></div>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-scientific-body font-semibold text-[var(--foreground)] mb-2">
+                    {activeTab === 'search' ? '🔍 Analyzing Research Database' : 
+                     activeTab === 'ask' ? '🤖 AI Processing Your Question' : 
+                     '🎨 Creating Educational Visuals'}
+                  </h3>
+                  <p className="text-scientific-caption text-[var(--foreground-secondary)]">
+                    {activeTab === 'search' ? 'Searching through NASA bioscience documents...' : 
+                     activeTab === 'ask' ? 'Generating comprehensive research-backed answer...' : 
+                     'Crafting manga panels and coloring pages...'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Search Results */}
         {!loading && searchResults.length > 0 && (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Search Results ({searchResults.length})
-            </h2>
-            <div className="space-y-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-[var(--accent-blue)] flex items-center justify-center">
+                <span className="text-lg text-white">🔍</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-[var(--foreground)]">
+                  Research Documents Found
+                </h2>
+                <p className="text-scientific-caption text-[var(--foreground-secondary)]">
+                  {searchResults.length} relevant NASA bioscience {searchResults.length === 1 ? 'document' : 'documents'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="scientific-grid">
               {searchResults.map((result, index) => (
-                <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {result.title}
-                    </h3>
-                    <span className="text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded">
-                      {result.section}
-                    </span>
+                <div key={index} className="scientific-card group">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-[var(--foreground)] group-hover:text-[var(--accent-blue)] transition-colors leading-tight">
+                        {result.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-[var(--accent-blue)] bg-opacity-10 text-[var(--accent-blue)] border border-[var(--accent-blue)] border-opacity-20">
+                          {result.section}
+                        </span>
+                        <span className="text-xs text-[var(--foreground-secondary)]">
+                          Document #{index + 1}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-300 mb-3">
+                  
+                  <p className="text-scientific-body text-[var(--foreground-secondary)] mb-4 leading-relaxed">
                     {result.snippet}...
                   </p>
-                  <a
-                    href={result.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-600 text-sm font-medium"
-                  >
-                    View Source →
-                  </a>
+                  
+                  <div className="flex items-center justify-between pt-4 border-t border-[var(--border-subtle)]">
+                    <span className="text-xs text-[var(--foreground-secondary)] font-medium">
+                      NASA Research Archive
+                    </span>
+                    <a
+                      href={result.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[var(--accent-blue)] hover:bg-[var(--accent-blue)] hover:bg-opacity-10 transition-all group-hover:transform group-hover:translate-x-1"
+                    >
+                      <span>View Source</span>
+                      <span className="text-xs">→</span>
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
@@ -372,45 +542,88 @@ export default function Home() {
 
         {/* Ask Response */}
         {!loading && askResponse && (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              AI Response
-            </h2>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-              <div className="prose dark:prose-invert max-w-none">
-                <p className="whitespace-pre-wrap text-gray-900 dark:text-white">
-                  {askResponse.answer}
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-[var(--accent-teal)] flex items-center justify-center">
+                <span className="text-lg text-white">🤖</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-[var(--foreground)]">
+                  AI Research Assistant Response
+                </h2>
+                <p className="text-scientific-caption text-[var(--foreground-secondary)]">
+                  Comprehensive analysis backed by scientific sources
                 </p>
               </div>
             </div>
-
-            {Array.isArray(askResponse.sources) && askResponse.sources.length > 0 && (
+            
+            {/* Main AI Response in Manga-style Panel */}
+            <div className="manga-panel mb-8">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent-teal)] to-[var(--accent-blue)] flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg text-white">🤖</span>
+                </div>
+                <div className="flex-1">
+                  <div className="manga-speech-bubble">
+                    <div className="text-scientific-body text-[var(--foreground)] whitespace-pre-wrap leading-relaxed">
+                      {askResponse.answer}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-[var(--foreground-secondary)] italic">
+                  AI Research Assistant • Powered by Scientific Knowledge Base
+                </span>
+              </div>
+            </div>
+            
+            {/* Sources Section */}
+            {askResponse.sources.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Sources ({askResponse.sources.length})
-                </h3>
-                <div className="space-y-3">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--accent-blue)] bg-opacity-20 flex items-center justify-center">
+                    <span className="text-sm">📚</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                    Scientific Sources ({askResponse.sources.length})
+                  </h3>
+                </div>
+                
+                <div className="scientific-grid">
                   {askResponse.sources.map((source, index) => (
-                    <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                            {source.label}
-                          </span>
-                          <h4 className="font-medium text-gray-900 dark:text-white">
+                    <div key={index} className="scientific-card group">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-[var(--accent-teal)] bg-opacity-15 text-[var(--accent-teal)]">
+                              {source.label}
+                            </span>
+                            <span className="text-xs text-[var(--foreground-secondary)]">
+                              Source #{index + 1}
+                            </span>
+                          </div>
+                          <h4 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--accent-teal)] transition-colors leading-tight">
                             {source.title}
                           </h4>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                          <span className="text-sm text-[var(--foreground-secondary)] mt-1 block">
                             {source.section}
                           </span>
                         </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)]">
+                        <span className="text-xs text-[var(--foreground-secondary)] font-medium">
+                          Referenced in AI Response
+                        </span>
                         <a
                           href={source.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[var(--accent-teal)] hover:bg-[var(--accent-teal)] hover:bg-opacity-10 transition-all group-hover:transform group-hover:translate-x-1"
                         >
-                          View →
+                          <span>Read Full Paper</span>
+                          <span className="text-xs">→</span>
                         </a>
                       </div>
                     </div>
@@ -424,67 +637,152 @@ export default function Home() {
         {/* Visualize Results */}
         {!loading && visualizeResponse && (
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Generated Educational Images ({visualizeResponse.images?.length ?? 0})
-            </h2>
-
-            {/* Answer */}
-            {visualizeResponse.answer && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-                <div className="prose dark:prose-invert max-w-none">
-                  <p className="whitespace-pre-wrap text-gray-900 dark:text-white">
-                    {visualizeResponse.answer}
-                  </p>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-[var(--accent-purple)] flex items-center justify-center">
+                <span className="text-lg text-white">🎨</span>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-[var(--foreground)]">
+                  Educational {visualizeResponse.mode === 'manga' ? 'Manga Panels' : 'Coloring Pages'} Generated
+                </h2>
+                <p className="text-scientific-caption text-[var(--foreground-secondary)]">
+                  {visualizeResponse.images.length} custom {visualizeResponse.mode === 'manga' ? 'manga-style illustrations' : 'coloring book pages'} for youth education
+                </p>
+              </div>
+            </div>
+            
+            {/* Educational Context */}
+            <div className="manga-panel mb-8">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent-purple)] to-[var(--accent-coral)] flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg text-white">👩‍🔬</span>
+                </div>
+                <div className="flex-1">
+                  <div className="manga-speech-bubble">
+                    <div className="text-scientific-body text-[var(--foreground)] whitespace-pre-wrap leading-relaxed">
+                      {visualizeResponse.answer}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {/* Generated Images */}
-            {Array.isArray(visualizeResponse.images) && visualizeResponse.images.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              <div className="text-right mt-4">
+                <span className="text-xs text-[var(--foreground-secondary)] italic">
+                  Educational Context • Designed for Young Scientists
+                </span>
+              </div>
+            </div>
+            
+            {/* Generated Images Gallery */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg bg-[var(--accent-coral)] bg-opacity-20 flex items-center justify-center">
+                  <span className="text-sm">{visualizeResponse.mode === 'manga' ? '📚' : '🖍️'}</span>
+                </div>
+                <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                  {visualizeResponse.mode === 'manga' ? 'Manga Story Panels' : 'Interactive Coloring Pages'}
+                </h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {visualizeResponse.images.map((image, index) => (
-                  <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <img
-                      src={`data:image/png;base64,${image}`}
-                      alt={`Generated educational image ${index + 1}`}
-                      className="w-full h-auto rounded-lg"
-                    />
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-                      {visualizeResponse.mode === 'manga' ? 'Manga Panel' : 'Coloring Page'} {index + 1}
-                    </p>
+                  <div key={index} className="scientific-card group overflow-hidden">
+                    <div className="relative">
+                      <img
+                        src={`data:image/png;base64,${image}`}
+                        alt={`Generated educational ${visualizeResponse.mode} ${index + 1}`}
+                        className="w-full h-auto rounded-lg transition-transform group-hover:scale-105"
+                        style={{ 
+                          border: visualizeResponse.mode === 'manga' 
+                            ? '3px solid var(--foreground)' 
+                            : '2px dashed var(--accent-coral)',
+                          borderRadius: '12px'
+                        }}
+                      />
+                      {visualizeResponse.mode === 'manga' && (
+                        <div className="absolute top-2 left-2 bg-[var(--accent-coral)] text-white px-2 py-1 rounded-lg text-xs font-bold">
+                          Panel {index + 1}
+                        </div>
+                      )}
+                      {visualizeResponse.mode === 'coloring' && (
+                        <div className="absolute top-2 right-2 bg-[var(--accent-yellow)] text-[var(--foreground)] px-2 py-1 rounded-lg text-xs font-bold">
+                          Color Me! 🖍️
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold text-[var(--foreground)] text-sm">
+                            {visualizeResponse.mode === 'manga' ? `Manga Panel ${index + 1}` : `Coloring Page ${index + 1}`}
+                          </h4>
+                          <p className="text-xs text-[var(--foreground-secondary)] mt-1">
+                            {visualizeResponse.mode === 'manga' 
+                              ? 'Educational story illustration' 
+                              : 'Interactive learning activity'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button className="w-8 h-8 rounded-lg bg-[var(--accent-blue)] bg-opacity-10 hover:bg-opacity-20 flex items-center justify-center transition-colors">
+                            <span className="text-sm">💾</span>
+                          </button>
+                          <button className="w-8 h-8 rounded-lg bg-[var(--accent-purple)] bg-opacity-10 hover:bg-opacity-20 flex items-center justify-center transition-colors">
+                            <span className="text-sm">🔍</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
-
-            {/* Sources */}
-            {Array.isArray(visualizeResponse.sources) && visualizeResponse.sources.length > 0 && (
+            </div>
+            
+            {/* Sources for Visualizations */}
+            {visualizeResponse.sources.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Sources ({visualizeResponse.sources.length})
-                </h3>
-                <div className="space-y-3">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--accent-blue)] bg-opacity-20 flex items-center justify-center">
+                    <span className="text-sm">📖</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-[var(--foreground)]">
+                    Scientific Sources for Educational Content ({visualizeResponse.sources.length})
+                  </h3>
+                </div>
+                
+                <div className="scientific-grid">
                   {visualizeResponse.sources.map((source, index) => (
-                    <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                            {source.label}
-                          </span>
-                          <h4 className="font-medium text-gray-900 dark:text-white">
+                    <div key={index} className="scientific-card group">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold bg-[var(--accent-purple)] bg-opacity-15 text-[var(--accent-purple)]">
+                              {source.label}
+                            </span>
+                            <span className="text-xs text-[var(--foreground-secondary)]">
+                              Visualization Source #{index + 1}
+                            </span>
+                          </div>
+                          <h4 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--accent-purple)] transition-colors leading-tight">
                             {source.title}
                           </h4>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                          <span className="text-sm text-[var(--foreground-secondary)] mt-1 block">
                             {source.section}
                           </span>
                         </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)]">
+                        <span className="text-xs text-[var(--foreground-secondary)] font-medium">
+                          Used in Educational Visualization
+                        </span>
                         <a
                           href={source.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[var(--accent-purple)] hover:bg-[var(--accent-purple)] hover:bg-opacity-10 transition-all group-hover:transform group-hover:translate-x-1"
                         >
-                          View →
+                          <span>Original Research</span>
+                          <span className="text-xs">→</span>
                         </a>
                       </div>
                     </div>
@@ -502,12 +800,32 @@ export default function Home() {
           </div>
         )}
 
-        {/* No Results */}
+        {/* No Results State */}
         {!loading && searchResults.length === 0 && !askResponse && !visualizeResponse && query && (
-          <div className="text-center py-8">
-            <p className="text-gray-600 dark:text-gray-300">
-              No results found. Try a different query.
-            </p>
+          <div className="text-center py-16">
+            <div className="scientific-card max-w-md mx-auto p-8">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-[var(--background-secondary)] flex items-center justify-center">
+                  <span className="text-2xl opacity-50">🔍</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+                    No Results Found
+                  </h3>
+                  <p className="text-scientific-caption text-[var(--foreground-secondary)] mb-4">
+                    We couldn't find any NASA bioscience research matching your query.
+                  </p>
+                  <div className="text-xs text-[var(--foreground-secondary)]">
+                    <p className="mb-2"><strong>Try:</strong></p>
+                    <ul className="text-left space-y-1">
+                      <li>• Different keywords or phrases</li>
+                      <li>• More general terms</li>
+                      <li>• Scientific terminology variations</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
