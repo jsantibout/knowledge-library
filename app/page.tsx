@@ -22,7 +22,7 @@ interface AskResponse {
 
 interface VisualizeResponse {
   success: boolean;
-  mode: string;
+  mode: "manga" | "coloring" | string;
   imageCount: number;
   answer: string;
   sources: Array<{
@@ -32,6 +32,7 @@ interface VisualizeResponse {
     section: string;
   }>;
   images: string[];
+  error?: string;
 }
 
 interface HealthStatus {
@@ -43,6 +44,9 @@ interface HealthStatus {
   llm_enabled: boolean;
 }
 
+const safeArr = <T,>(x: unknown): T[] => (Array.isArray(x) ? (x as T[]) : []);
+const len = (x: unknown): number => (Array.isArray(x) ? x.length : 0);
+
 export default function Home() {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -53,32 +57,39 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'search' | 'ask' | 'visualize'>('search');
   const [visualizeMode, setVisualizeMode] = useState<'manga' | 'coloring'>('manga');
   const [imageCount, setImageCount] = useState(1);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     // Check backend health on component mount
     fetch('/api/health')
       .then(res => res.json())
       .then(data => setHealthStatus(data))
-      .catch(err => console.error('Health check failed:', err));
+      .catch((err) => {
+        console.error('Health check failed:', err),
+          setHealthStatus(null);
+      });
   }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
+    setErrorMsg(null);
     setAskResponse(null);
-    
+    setVisualizeResponse(null);
+
     try {
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query, k: 5 }),
       });
-      
+
       const data = await response.json();
       setSearchResults(data.results || []);
     } catch (error) {
       console.error('Search failed:', error);
+      setErrorMsg(error?.message || "Search failed.");
     } finally {
       setLoading(false);
     }
@@ -86,22 +97,32 @@ export default function Home() {
 
   const handleAsk = async () => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
+    setErrorMsg(null);
     setSearchResults([]);
     setVisualizeResponse(null);
-    
+
     try {
       const response = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query, k: 5 }),
       });
-      
+      if (!response.ok) {
+        const txt = await response.text();
+        throw new Error(`Ask failed: ${response.status} ${txt}`);
+      }
       const data = await response.json();
-      setAskResponse(data);
-    } catch (error) {
+      setAskResponse({
+        query: data.query ?? "",
+        answer: data.answer ?? "",
+        sources: safeArr(data.sources),
+      });
+    } catch (error: any) {
       console.error('Ask failed:', error);
+      setErrorMsg(error?.message || "Ask failed.");
+      setAskResponse(null);
     } finally {
       setLoading(false);
     }
@@ -109,26 +130,60 @@ export default function Home() {
 
   const handleVisualize = async () => {
     if (!query.trim()) return;
-    
     setLoading(true);
+    setErrorMsg(null);
     setSearchResults([]);
     setAskResponse(null);
-    
+
     try {
-      const response = await fetch('/api/visualize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          question: query, 
-          mode: visualizeMode, 
-          imageCount: imageCount 
+      const response = await fetch("/api/visualize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: query,
+          mode: visualizeMode,
+          imageCount,
         }),
       });
-      
+
       const data = await response.json();
-      setVisualizeResponse(data);
-    } catch (error) {
-      console.error('Visualize failed:', error);
+
+      if (!response.ok) {
+        // Ensure safe state on error
+        setVisualizeResponse({
+          success: false,
+          mode: visualizeMode,
+          imageCount: 0,
+          answer: "",
+          sources: [],
+          images: [],
+          error: data?.error || "Visualization failed.",
+        });
+        setErrorMsg(data?.error || "Visualization failed.");
+        return;
+      }
+
+      setVisualizeResponse({
+        success: !!data.success,
+        mode: data.mode ?? visualizeMode,
+        imageCount: Array.isArray(data.images) ? data.images.length : data.imageCount ?? 0,
+        answer: data.answer ?? "",
+        sources: safeArr(data.sources),
+        images: safeArr<string>(data.images),
+      });
+    } catch (error: any) {
+      console.error("Visualize failed:", error);
+      setErrorMsg(error?.message || "Visualization failed.");
+      // Safe fallback object
+      setVisualizeResponse({
+        success: false,
+        mode: visualizeMode,
+        imageCount: 0,
+        answer: "",
+        sources: [],
+        images: [],
+        error: error?.message || "Visualization failed.",
+      });
     } finally {
       setLoading(false);
     }
@@ -156,14 +211,13 @@ export default function Home() {
           <p className="text-lg text-gray-600 dark:text-gray-300">
             Search and query NASA bioscience research documents
           </p>
-          
+
           {/* Health Status */}
           {healthStatus && (
-            <div className={`mt-4 p-3 rounded-lg ${
-              healthStatus.ok 
-                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-            }`}>
+            <div className={`mt-4 p-3 rounded-lg ${healthStatus.ok
+              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+              }`}>
               <div className="flex items-center justify-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${healthStatus.ok ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 <span className="text-sm font-medium">
@@ -173,6 +227,13 @@ export default function Home() {
               </div>
             </div>
           )}
+
+          {/* Error Banner */}
+          {errorMsg && (
+            <div className="mt-4 p-3 rounded-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+              {errorMsg}
+            </div>
+          )}
         </div>
 
         {/* Tab Navigation */}
@@ -180,31 +241,28 @@ export default function Home() {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm">
             <button
               onClick={() => setActiveTab('search')}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                activeTab === 'search'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
+              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'search'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                }`}
             >
               Search Documents
             </button>
             <button
               onClick={() => setActiveTab('ask')}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                activeTab === 'ask'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
+              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'ask'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                }`}
             >
               Ask AI
             </button>
             <button
               onClick={() => setActiveTab('visualize')}
-              className={`px-4 py-2 rounded-md transition-colors ${
-                activeTab === 'visualize'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
+              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'visualize'
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                }`}
             >
               🎨 Visualize
             </button>
@@ -219,11 +277,11 @@ export default function Home() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={
-                activeTab === 'search' 
-                  ? "Search for documents..." 
+                activeTab === 'search'
+                  ? "Search for documents..."
                   : activeTab === 'ask'
-                  ? "Ask a question about space biology..."
-                  : "Ask a question to generate educational images..."
+                    ? "Ask a question about space biology..."
+                    : "Ask a question to generate educational images..."
               }
               className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
               disabled={loading}
@@ -236,7 +294,7 @@ export default function Home() {
               {loading ? '...' : activeTab === 'search' ? 'Search' : activeTab === 'ask' ? 'Ask' : 'Visualize'}
             </button>
           </div>
-          
+
           {/* Visualize-specific controls */}
           {activeTab === 'visualize' && (
             <div className="mt-4 flex gap-4 items-center justify-center">
@@ -258,7 +316,7 @@ export default function Home() {
                   min="1"
                   max="5"
                   value={imageCount}
-                  onChange={(e) => setImageCount(parseInt(e.target.value) || 1)}
+                  onChange={(e) => setImageCount(parseInt(e.target.value || "1", 10))}
                   className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
                 />
               </div>
@@ -271,9 +329,9 @@ export default function Home() {
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             <p className="mt-2 text-gray-600 dark:text-gray-300">
-              {activeTab === 'search' ? 'Searching documents...' : 
-               activeTab === 'ask' ? 'Generating answer...' : 
-               'Generating educational images...'}
+              {activeTab === 'search' ? 'Searching documents...' :
+                activeTab === 'ask' ? 'Generating answer...' :
+                  'Generating educational images...'}
             </p>
           </div>
         )}
@@ -325,8 +383,8 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            
-            {askResponse.sources.length > 0 && (
+
+            {Array.isArray(askResponse.sources) && askResponse.sources.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Sources ({askResponse.sources.length})
@@ -367,36 +425,40 @@ export default function Home() {
         {!loading && visualizeResponse && (
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Generated Educational Images ({visualizeResponse.images.length})
+              Generated Educational Images ({visualizeResponse.images?.length ?? 0})
             </h2>
-            
+
             {/* Answer */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-              <div className="prose dark:prose-invert max-w-none">
-                <p className="whitespace-pre-wrap text-gray-900 dark:text-white">
-                  {visualizeResponse.answer}
-                </p>
-              </div>
-            </div>
-            
-            {/* Generated Images */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-              {visualizeResponse.images.map((image, index) => (
-                <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                  <img
-                    src={`data:image/png;base64,${image}`}
-                    alt={`Generated educational image ${index + 1}`}
-                    className="w-full h-auto rounded-lg"
-                  />
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-                    {visualizeResponse.mode === 'manga' ? 'Manga Panel' : 'Coloring Page'} {index + 1}
+            {visualizeResponse.answer && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                <div className="prose dark:prose-invert max-w-none">
+                  <p className="whitespace-pre-wrap text-gray-900 dark:text-white">
+                    {visualizeResponse.answer}
                   </p>
                 </div>
-              ))}
-            </div>
-            
+              </div>
+            )}
+
+            {/* Generated Images */}
+            {Array.isArray(visualizeResponse.images) && visualizeResponse.images.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                {visualizeResponse.images.map((image, index) => (
+                  <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <img
+                      src={`data:image/png;base64,${image}`}
+                      alt={`Generated educational image ${index + 1}`}
+                      className="w-full h-auto rounded-lg"
+                    />
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
+                      {visualizeResponse.mode === 'manga' ? 'Manga Panel' : 'Coloring Page'} {index + 1}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Sources */}
-            {visualizeResponse.sources.length > 0 && (
+            {Array.isArray(visualizeResponse.sources) && visualizeResponse.sources.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Sources ({visualizeResponse.sources.length})
@@ -428,6 +490,13 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Visualization Error (if any) */}
+            {visualizeResponse.error && (
+              <div className="mt-4 p-3 rounded-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {visualizeResponse.error}
               </div>
             )}
           </div>
