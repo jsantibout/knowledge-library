@@ -22,7 +22,7 @@ interface AskResponse {
 
 interface VisualizeResponse {
   success: boolean;
-  mode: string;
+  mode: "manga" | "coloring" | string;
   imageCount: number;
   answer: string;
   sources: Array<{
@@ -32,6 +32,7 @@ interface VisualizeResponse {
     section: string;
   }>;
   images: string[];
+  error?: string;
 }
 
 interface HealthStatus {
@@ -43,6 +44,9 @@ interface HealthStatus {
   llm_enabled: boolean;
 }
 
+const safeArr = <T,>(x: unknown): T[] => (Array.isArray(x) ? (x as T[]) : []);
+const len = (x: unknown): number => (Array.isArray(x) ? x.length : 0);
+
 export default function Home() {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -53,32 +57,39 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'search' | 'ask' | 'visualize'>('search');
   const [visualizeMode, setVisualizeMode] = useState<'manga' | 'coloring'>('manga');
   const [imageCount, setImageCount] = useState(1);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     // Check backend health on component mount
     fetch('/api/health')
       .then(res => res.json())
       .then(data => setHealthStatus(data))
-      .catch(err => console.error('Health check failed:', err));
+      .catch((err) => {
+        console.error('Health check failed:', err),
+          setHealthStatus(null);
+      });
   }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
+    setErrorMsg(null);
     setAskResponse(null);
-    
+    setVisualizeResponse(null);
+
     try {
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query, k: 5 }),
       });
-      
+
       const data = await response.json();
       setSearchResults(data.results || []);
     } catch (error) {
       console.error('Search failed:', error);
+      setErrorMsg(error?.message || "Search failed.");
     } finally {
       setLoading(false);
     }
@@ -86,22 +97,32 @@ export default function Home() {
 
   const handleAsk = async () => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
+    setErrorMsg(null);
     setSearchResults([]);
     setVisualizeResponse(null);
-    
+
     try {
       const response = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query, k: 5 }),
       });
-      
+      if (!response.ok) {
+        const txt = await response.text();
+        throw new Error(`Ask failed: ${response.status} ${txt}`);
+      }
       const data = await response.json();
-      setAskResponse(data);
-    } catch (error) {
+      setAskResponse({
+        query: data.query ?? "",
+        answer: data.answer ?? "",
+        sources: safeArr(data.sources),
+      });
+    } catch (error: any) {
       console.error('Ask failed:', error);
+      setErrorMsg(error?.message || "Ask failed.");
+      setAskResponse(null);
     } finally {
       setLoading(false);
     }
@@ -109,26 +130,60 @@ export default function Home() {
 
   const handleVisualize = async () => {
     if (!query.trim()) return;
-    
     setLoading(true);
+    setErrorMsg(null);
     setSearchResults([]);
     setAskResponse(null);
-    
+
     try {
-      const response = await fetch('/api/visualize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          question: query, 
-          mode: visualizeMode, 
-          imageCount: imageCount 
+      const response = await fetch("/api/visualize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: query,
+          mode: visualizeMode,
+          imageCount,
         }),
       });
-      
+
       const data = await response.json();
-      setVisualizeResponse(data);
-    } catch (error) {
-      console.error('Visualize failed:', error);
+
+      if (!response.ok) {
+        // Ensure safe state on error
+        setVisualizeResponse({
+          success: false,
+          mode: visualizeMode,
+          imageCount: 0,
+          answer: "",
+          sources: [],
+          images: [],
+          error: data?.error || "Visualization failed.",
+        });
+        setErrorMsg(data?.error || "Visualization failed.");
+        return;
+      }
+
+      setVisualizeResponse({
+        success: !!data.success,
+        mode: data.mode ?? visualizeMode,
+        imageCount: Array.isArray(data.images) ? data.images.length : data.imageCount ?? 0,
+        answer: data.answer ?? "",
+        sources: safeArr(data.sources),
+        images: safeArr<string>(data.images),
+      });
+    } catch (error: any) {
+      console.error("Visualize failed:", error);
+      setErrorMsg(error?.message || "Visualization failed.");
+      // Safe fallback object
+      setVisualizeResponse({
+        success: false,
+        mode: visualizeMode,
+        imageCount: 0,
+        answer: "",
+        sources: [],
+        images: [],
+        error: error?.message || "Visualization failed.",
+      });
     } finally {
       setLoading(false);
     }
@@ -205,6 +260,13 @@ export default function Home() {
                   <span className="text-xs font-medium opacity-75">AI Ready</span>
                 </>
               )}
+            </div>
+          )}
+
+          {/* Error Banner */}
+          {errorMsg && (
+            <div className="mt-4 p-3 rounded-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+              {errorMsg}
             </div>
           )}
         </div>
@@ -726,6 +788,13 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Visualization Error (if any) */}
+            {visualizeResponse.error && (
+              <div className="mt-4 p-3 rounded-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                {visualizeResponse.error}
               </div>
             )}
           </div>

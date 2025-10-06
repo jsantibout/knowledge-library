@@ -1,6 +1,8 @@
 langchain
 langchain-openai
 langchain-community
+langchain-huggingface
+langchain-chroma
 faiss-cpu
 tiktoken
 python-dotenv
@@ -10,3 +12,4 @@ fastapi
 uvicorn
 chromadb
 trafilatura
+sentence-transformers
