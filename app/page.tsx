@@ -22,7 +22,7 @@ interface AskResponse {
 
 interface VisualizeResponse {
   success: boolean;
-  mode: "manga" | "coloring" | string;
+  mode: string;
   imageCount: number;
   answer: string;
   sources: Array<{
@@ -32,7 +32,6 @@ interface VisualizeResponse {
     section: string;
   }>;
   images: string[];
-  error?: string;
 }
 
 interface HealthStatus {
@@ -44,9 +43,6 @@ interface HealthStatus {
   llm_enabled: boolean;
 }
 
-const safeArr = <T,>(x: unknown): T[] => (Array.isArray(x) ? (x as T[]) : []);
-const len = (x: unknown): number => (Array.isArray(x) ? x.length : 0);
-
 export default function Home() {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -57,39 +53,29 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'search' | 'ask' | 'visualize'>('search');
   const [visualizeMode, setVisualizeMode] = useState<'manga' | 'coloring'>('manga');
   const [imageCount, setImageCount] = useState(1);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check backend health on component mount
     fetch('/api/health')
       .then(res => res.json())
       .then(data => setHealthStatus(data))
-      .catch((err) => {
-        console.error('Health check failed:', err),
-          setHealthStatus(null);
-      });
+      .catch(err => console.error('Health check failed:', err));
   }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
-
     setLoading(true);
-    setErrorMsg(null);
     setAskResponse(null);
     setVisualizeResponse(null);
-
     try {
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query, k: 5 }),
       });
-
       const data = await response.json();
       setSearchResults(data.results || []);
     } catch (error) {
       console.error('Search failed:', error);
-      setErrorMsg(error?.message || "Search failed.");
     } finally {
       setLoading(false);
     }
@@ -97,32 +83,19 @@ export default function Home() {
 
   const handleAsk = async () => {
     if (!query.trim()) return;
-
     setLoading(true);
-    setErrorMsg(null);
     setSearchResults([]);
     setVisualizeResponse(null);
-
     try {
       const response = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query, k: 5 }),
       });
-      if (!response.ok) {
-        const txt = await response.text();
-        throw new Error(`Ask failed: ${response.status} ${txt}`);
-      }
       const data = await response.json();
-      setAskResponse({
-        query: data.query ?? "",
-        answer: data.answer ?? "",
-        sources: safeArr(data.sources),
-      });
-    } catch (error: any) {
+      setAskResponse(data);
+    } catch (error) {
       console.error('Ask failed:', error);
-      setErrorMsg(error?.message || "Ask failed.");
-      setAskResponse(null);
     } finally {
       setLoading(false);
     }
@@ -131,59 +104,22 @@ export default function Home() {
   const handleVisualize = async () => {
     if (!query.trim()) return;
     setLoading(true);
-    setErrorMsg(null);
     setSearchResults([]);
     setAskResponse(null);
-
     try {
-      const response = await fetch("/api/visualize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/visualize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: query,
           mode: visualizeMode,
-          imageCount,
+          imageCount: imageCount
         }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        // Ensure safe state on error
-        setVisualizeResponse({
-          success: false,
-          mode: visualizeMode,
-          imageCount: 0,
-          answer: "",
-          sources: [],
-          images: [],
-          error: data?.error || "Visualization failed.",
-        });
-        setErrorMsg(data?.error || "Visualization failed.");
-        return;
-      }
-
-      setVisualizeResponse({
-        success: !!data.success,
-        mode: data.mode ?? visualizeMode,
-        imageCount: Array.isArray(data.images) ? data.images.length : data.imageCount ?? 0,
-        answer: data.answer ?? "",
-        sources: safeArr(data.sources),
-        images: safeArr<string>(data.images),
-      });
-    } catch (error: any) {
-      console.error("Visualize failed:", error);
-      setErrorMsg(error?.message || "Visualization failed.");
-      // Safe fallback object
-      setVisualizeResponse({
-        success: false,
-        mode: visualizeMode,
-        imageCount: 0,
-        answer: "",
-        sources: [],
-        images: [],
-        error: error?.message || "Visualization failed.",
-      });
+      setVisualizeResponse(data);
+    } catch (error) {
+      console.error('Visualize failed:', error);
     } finally {
       setLoading(false);
     }
@@ -191,326 +127,299 @@ export default function Home() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === 'search') {
-      handleSearch();
-    } else if (activeTab === 'ask') {
-      handleAsk();
-    } else if (activeTab === 'visualize') {
-      handleVisualize();
-    }
+    if (activeTab === 'search') return handleSearch();
+    if (activeTab === 'ask') return handleAsk();
+    if (activeTab === 'visualize') return handleVisualize();
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            SpaceBio Knowledge Library
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Search and query NASA bioscience research documents
-          </p>
-
-          {/* Health Status */}
-          {healthStatus && (
-            <div className={`mt-4 p-3 rounded-lg ${healthStatus.ok
-              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-              }`}>
-              <div className="flex items-center justify-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${healthStatus.ok ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span className="text-sm font-medium">
-                  Backend {healthStatus.ok ? 'Connected' : 'Disconnected'}
-                  {healthStatus.llm_enabled && ' • LLM Enabled'}
-                </span>
-              </div>
+    <div className="container-wide mt-6">
+      {/* Status + Tabs */}
+      <section className="card p-6 sm:p-8">
+        {/* Health status */}
+        {healthStatus && (
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="chip" role="status" aria-live="polite">
+              <span
+                className="dot"
+                style={{ background: healthStatus.ok ? '#34d399' : '#ef4444' }}
+              />
+              <span>
+                Backend {healthStatus.ok ? 'Connected' : 'Disconnected'}
+                {healthStatus.llm_enabled ? ' • LLM Enabled' : ''}
+              </span>
             </div>
-          )}
-
-          {/* Error Banner */}
-          {errorMsg && (
-            <div className="mt-4 p-3 rounded-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-              {errorMsg}
+            <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
+              <span>Index: <strong className="font-medium">{healthStatus.index_dir || '—'}</strong></span>
+              <span>Collection: <strong className="font-medium">{healthStatus.collection || '—'}</strong></span>
+              <span>Embed: <strong className="font-medium">{healthStatus.embed_model || '—'}</strong></span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Tab Navigation */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm">
+        {/* Tabs */}
+        <div className="flex justify-center">
+          <div className="segmented">
             <button
+              type="button"
               onClick={() => setActiveTab('search')}
-              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'search'
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
+              aria-pressed={activeTab === 'search'}
             >
-              Search Documents
+              Search
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('ask')}
-              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'ask'
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
+              aria-pressed={activeTab === 'ask'}
             >
               Ask AI
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('visualize')}
-              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'visualize'
-                ? 'bg-blue-500 text-white'
-                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                }`}
+              aria-pressed={activeTab === 'visualize'}
             >
               🎨 Visualize
             </button>
           </div>
         </div>
 
-        {/* Search/Ask/Visualize Form */}
-        <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-8">
+        {/* Query form */}
+        <form onSubmit={handleSubmit} className="mt-6 max-w-2xl mx-auto">
+          <label htmlFor="query" className="sr-only">Enter your query</label>
           <div className="flex gap-2">
             <input
+              id="query"
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={
                 activeTab === 'search'
-                  ? "Search for documents..."
+                  ? "Search for documents…"
                   : activeTab === 'ask'
-                    ? "Ask a question about space biology..."
-                    : "Ask a question to generate educational images..."
+                  ? "Ask a question about space biology…"
+                  : "Ask to generate manga or coloring pages…"
               }
-              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
+              className="input flex-1 bg-transparent"
               disabled={loading}
             />
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn btn-primary"
             >
-              {loading ? '...' : activeTab === 'search' ? 'Search' : activeTab === 'ask' ? 'Ask' : 'Visualize'}
+              {loading ? 'Working…' : activeTab === 'search' ? 'Search' : activeTab === 'ask' ? 'Ask' : 'Visualize'}
             </button>
           </div>
 
-          {/* Visualize-specific controls */}
+          {/* Visualize controls */}
           {activeTab === 'visualize' && (
-            <div className="mt-4 flex gap-4 items-center justify-center">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Style:</label>
+                <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  Style:
+                </label>
                 <select
                   value={visualizeMode}
                   onChange={(e) => setVisualizeMode(e.target.value as 'manga' | 'coloring')}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
+                  className="input py-2 px-3"
                 >
                   <option value="manga">Manga</option>
                   <option value="coloring">Coloring Book</option>
                 </select>
               </div>
+
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Images:</label>
+                <label className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  Images:
+                </label>
                 <input
                   type="number"
-                  min="1"
-                  max="5"
+                  min={1}
+                  max={5}
                   value={imageCount}
-                  onChange={(e) => setImageCount(parseInt(e.target.value || "1", 10))}
-                  className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
+                  onChange={(e) => setImageCount(parseInt(e.target.value) || 1)}
+                  className="input w-24 py-2 px-3"
                 />
               </div>
             </div>
           )}
         </form>
+      </section>
 
-        {/* Results */}
-        {loading && (
-          <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-              {activeTab === 'search' ? 'Searching documents...' :
-                activeTab === 'ask' ? 'Generating answer...' :
-                  'Generating educational images...'}
-            </p>
-          </div>
-        )}
+      {/* Loading */}
+      {loading && (
+        <div className="text-center py-14">
+          <div className="inline-block animate-spin rounded-full h-9 w-9 border-2 border-[var(--accent-2)] border-t-transparent"></div>
+          <p className="mt-3 text-sm text-gray-500">
+            {activeTab === 'search'
+              ? 'Searching documents…'
+              : activeTab === 'ask'
+              ? 'Generating answer…'
+              : 'Generating educational images…'}
+          </p>
+        </div>
+      )}
 
-        {/* Search Results */}
-        {!loading && searchResults.length > 0 && (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Search Results ({searchResults.length})
-            </h2>
-            <div className="space-y-4">
-              {searchResults.map((result, index) => (
-                <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {result.title}
-                    </h3>
-                    <span className="text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded">
-                      {result.section}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-300 mb-3">
-                    {result.snippet}...
-                  </p>
-                  <a
-                    href={result.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-600 text-sm font-medium"
+      {/* Search Results */}
+      {!loading && searchResults.length > 0 && (
+        <section className="container-wide mt-8">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">Search Results ({searchResults.length})</h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {searchResults.map((result, i) => (
+              <article key={i} className="card p-5">
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <h3 className="text-base sm:text-lg font-semibold leading-snug">
+                    {result.title}
+                  </h3>
+                  <span
+                    className="text-xs sm:text-sm px-2 py-1 rounded-md"
+                    style={{ background: 'var(--subtle)', color: 'var(--fg-muted)' }}
                   >
-                    View Source →
-                  </a>
+                    {result.section}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Ask Response */}
-        {!loading && askResponse && (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              AI Response
-            </h2>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-              <div className="prose dark:prose-invert max-w-none">
-                <p className="whitespace-pre-wrap text-gray-900 dark:text-white">
-                  {askResponse.answer}
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-3">
+                  {result.snippet}…
                 </p>
-              </div>
-            </div>
-
-            {Array.isArray(askResponse.sources) && askResponse.sources.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Sources ({askResponse.sources.length})
-                </h3>
-                <div className="space-y-3">
-                  {askResponse.sources.map((source, index) => (
-                    <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                            {source.label}
-                          </span>
-                          <h4 className="font-medium text-gray-900 dark:text-white">
-                            {source.title}
-                          </h4>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {source.section}
-                          </span>
-                        </div>
-                        <a
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-600 text-sm font-medium"
-                        >
-                          View →
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                <a
+                  href={result.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium"
+                  style={{ color: 'var(--accent-2)' }}
+                >
+                  View Source →
+                </a>
+              </article>
+            ))}
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Visualize Results */}
-        {!loading && visualizeResponse && (
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Generated Educational Images ({visualizeResponse.images?.length ?? 0})
-            </h2>
+      {/* Ask Response */}
+      {!loading && askResponse && (
+        <section className="container-wide mt-8">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">AI Response</h2>
+          <article className="card p-6 sm:p-8 mb-6">
+            <div className="prose dark:prose-invert max-w-none">
+              <p className="whitespace-pre-wrap text-sm sm:text-base">
+                {askResponse.answer}
+              </p>
+            </div>
+          </article>
 
-            {/* Answer */}
-            {visualizeResponse.answer && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-                <div className="prose dark:prose-invert max-w-none">
-                  <p className="whitespace-pre-wrap text-gray-900 dark:text-white">
-                    {visualizeResponse.answer}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Generated Images */}
-            {Array.isArray(visualizeResponse.images) && visualizeResponse.images.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {visualizeResponse.images.map((image, index) => (
-                  <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <img
-                      src={`data:image/png;base64,${image}`}
-                      alt={`Generated educational image ${index + 1}`}
-                      className="w-full h-auto rounded-lg"
-                    />
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
-                      {visualizeResponse.mode === 'manga' ? 'Manga Panel' : 'Coloring Page'} {index + 1}
-                    </p>
+          {askResponse.sources.length > 0 && (
+            <>
+              <h3 className="text-lg font-semibold mb-3">Sources ({askResponse.sources.length})</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                {askResponse.sources.map((source, i) => (
+                  <div key={i} className="panel p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>
+                          {source.label}
+                        </span>
+                        <h4 className="mt-1 text-sm font-medium">{source.title}</h4>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {source.section}
+                        </span>
+                      </div>
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium"
+                        style={{ color: 'var(--accent-2)' }}
+                      >
+                        View →
+                      </a>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
+            </>
+          )}
+        </section>
+      )}
 
-            {/* Sources */}
-            {Array.isArray(visualizeResponse.sources) && visualizeResponse.sources.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Sources ({visualizeResponse.sources.length})
-                </h3>
-                <div className="space-y-3">
-                  {visualizeResponse.sources.map((source, index) => (
-                    <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                            {source.label}
-                          </span>
-                          <h4 className="font-medium text-gray-900 dark:text-white">
-                            {source.title}
-                          </h4>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {source.section}
-                          </span>
-                        </div>
-                        <a
-                          href={source.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-600 text-sm font-medium"
-                        >
-                          View →
-                        </a>
+      {/* Visualize Results */}
+      {!loading && visualizeResponse && (
+        <section className="container-wide mt-8">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">
+            Generated Educational Images ({visualizeResponse.images.length})
+          </h2>
+
+          {/* Answer */}
+          <article className="card p-6 sm:p-8 mb-6">
+            <div className="prose dark:prose-invert max-w-none">
+              <p className="whitespace-pre-wrap text-sm sm:text-base">
+                {visualizeResponse.answer}
+              </p>
+            </div>
+          </article>
+
+          {/* Images grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            {visualizeResponse.images.map((image, index) => (
+              <figure key={index} className="manga-frame">
+                <img
+                  src={`data:image/png;base64,${image}`}
+                  alt={`Generated educational image ${index + 1}`}
+                  className="w-full h-auto rounded-md"
+                />
+                <figcaption className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                  {visualizeResponse.mode === 'manga' ? 'Manga Panel' : 'Coloring Page'} {index + 1}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+
+          {/* Sources */}
+          {visualizeResponse.sources.length > 0 && (
+            <>
+              <h3 className="text-lg font-semibold mb-3">
+                Sources ({visualizeResponse.sources.length})
+              </h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                {visualizeResponse.sources.map((source, i) => (
+                  <div key={i} className="panel p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>
+                          {source.label}
+                        </span>
+                        <h4 className="mt-1 text-sm font-medium">{source.title}</h4>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {source.section}
+                        </span>
                       </div>
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium"
+                        style={{ color: 'var(--accent-2)' }}
+                      >
+                        View →
+                      </a>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </>
+          )}
+        </section>
+      )}
 
-            {/* Visualization Error (if any) */}
-            {visualizeResponse.error && (
-              <div className="mt-4 p-3 rounded-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                {visualizeResponse.error}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* No Results */}
-        {!loading && searchResults.length === 0 && !askResponse && !visualizeResponse && query && (
-          <div className="text-center py-8">
-            <p className="text-gray-600 dark:text-gray-300">
-              No results found. Try a different query.
-            </p>
-          </div>
-        )}
-      </div>
+      {/* Empty state */}
+      {!loading && searchResults.length === 0 && !askResponse && !visualizeResponse && query && (
+        <div className="container-narrow text-center py-12">
+          <p className="text-gray-600 dark:text-gray-300">
+            No results found. Try a different query.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,26 +1,201 @@
 @import "tailwindcss";
 
+/* ===============================
+   Global Design Tokens (CSS vars)
+   =============================== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Base */
+  --bg: #fdfdfd;           /* off-white */
+  --fg: #2e2e2e;           /* charcoal */
+  --fg-muted: #6b7280;     /* mid-gray */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Accents (calm, desaturated) */
+  --accent: #99c1b9;       /* muted teal */
+  --accent-2: #bfd8e5;     /* soft blue */
+  --accent-3: #c7b9ff;     /* desat purple */
+
+  /* Optional youth highlights */
+  --highlight-coral: #f9a27b;
+  --highlight-yellow: #ffe599;
+
+  /* Surfaces */
+  --card: #ffffff;
+  --card-border: #e5e7eb;  /* gray-200 */
+  --subtle: #f6f7fb;       /* very light layer */
+
+  /* Shadows & motion */
+  --shadow-1: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-2: 0 6px 20px rgba(0,0,0,0.06);
+  --ring: rgba(153, 193, 185, 0.5); /* accent focus */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #0b0b0c;
+    --fg: #e8eaee;
+    --fg-muted: #a5acb8;
+
+    --card: #111317;
+    --card-border: #1f2430;
+    --subtle: #0e1014;
+
+    --ring: rgba(191, 216, 229, 0.45);
+    /* keep accents the same—works well in dark */
   }
 }
 
+/* Tailwind theme hooks */
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono); /* keep mono if you like */
+}
+
+/* ===============================
+   Base Resets & Typography
+   =============================== */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+  border-radius: 10px;
+}
+
+/* readable headings + “scientific subtext” */
+.h-display { @apply text-3xl sm:text-4xl font-semibold tracking-tight; }
+.h-subtle  { @apply text-sm sm:text-base font-normal text-gray-500 dark:text-gray-400; }
+
+/* Containers */
+.container-narrow { @apply max-w-3xl mx-auto px-4; }
+.container-wide   { @apply max-w-6xl mx-auto px-4; }
+
+/* ===============================
+   Primitives
+   =============================== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-1);
+  transition: box-shadow 150ms ease, transform 150ms ease, border-color 150ms ease;
+}
+.card:hover { box-shadow: var(--shadow-2); transform: translateY(-1px); }
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--card-border);
+  width: 100%;
+}
+
+/* Inputs */
+.input {
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  box-shadow: var(--shadow-1);
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+.dark .input { background: #0e1116; }
+.input:hover { border-color: color-mix(in oklab, var(--accent) 25%, var(--card-border)); }
+.input:focus { box-shadow: 0 0 0 4px var(--ring); border-color: transparent; }
+
+/* Buttons */
+.btn {
+  border-radius: 14px;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-primary {
+  color: #0b1f24;
+  background: color-mix(in oklab, var(--accent) 92%, white);
+  border: 1px solid color-mix(in oklab, var(--accent) 60%, var(--card-border));
+  box-shadow: var(--shadow-1);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--card-border);
+}
+.btn-outline:hover {
+  background: color-mix(in oklab, var(--accent-2) 14%, transparent);
+}
+
+/* Segmented tabs (calm) */
+.segmented {
+  @apply inline-flex p-1;
+  background: var(--subtle);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+}
+.segmented button {
+  @apply px-4 py-2 text-sm font-medium;
+  color: var(--fg-muted);
+  border-radius: 12px;
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+.segmented button[aria-pressed="true"] {
+  color: #06181d;
+  background: #ffffff;
+  box-shadow: var(--shadow-1);
+  border: 1px solid var(--card-border);
+}
+.dark .segmented button[aria-pressed="true"] { background: #0d1116; }
+
+/* Health chip */
+.chip {
+  @apply inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold;
+  border-radius: 9999px;
+  border: 1px solid var(--card-border);
+  background: #fff;
+}
+.dark .chip { background: #0e1116; }
+.dot { width: 8px; height: 8px; border-radius: 9999px; }
+
+/* Manga / Sketchpad frame */
+.manga-frame {
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(0,0,0,0.04) 30px),
+    #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--shadow-1);
+}
+
+/* Prose */
+.prose,
+.prose :where(p, li, h1, h2, h3, h4) { color: var(--fg); }
+.prose :where(h2,h3) { scroll-margin-top: 80px; }
+
+/* Header bar */
+.header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--card-border);
 }
