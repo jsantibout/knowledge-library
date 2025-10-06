@@ -1,36 +1,216 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🧠 SpaceBio Knowledge Library
 
-## Getting Started
+## Description
 
-First, run the development server:
+The **SpaceBio Knowledge Library** is an AI-powered educational research interface that connects to a **Retrieval-Augmented Generation (RAG)** backend.  
+It enables users to explore NASA bioscience data, ask intelligent questions, and generate educational visuals such as **manga-style panels** or **coloring book pages** to inspire scientific curiosity.
+
+---
+
+## ✨ Features
+
+- **RAG Search & Query** – Retrieve and summarize scientific literature with AI.
+- **Ask AI Anything** – Get contextual responses sourced from real NASA bioscience documents.
+- **Visual Generation Mode** – Generate manga or coloring-style educational illustrations.
+- **Dark / Light Mode** – Optimized for classrooms and research environments.
+- **Health Check Monitor** – Instantly verify backend connectivity and model availability.
+- **Tabbed Interface** – Switch between *Search*, *Ask*, and *Visualize* effortlessly.
+- **Responsive Design** – Clean, professional interface across desktop and mobile devices.
+
+---
+
+## 🧩 Tech Stack
+
+**Frontend**
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+
+**Backend (RAG Service)**
+- FastAPI (Python)
+- OpenAI API (GPT + Embeddings)
+- Local Retrieval & Vector Storage
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/spacebio-knowledge-library.git
+cd spacebio-knowledge-library
+```
+
+---
+
+### 2️⃣ Install Frontend Dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 3️⃣ Set Up Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Then open the `.env` file and fill in your credentials:
+
+```env
+OPENAI_API_KEY=
+OPENAI_EMBED_MODEL=text-embedding-3-large
+OPENAI_CHAT_MODEL=gpt-4o-mini
+BACKEND_URL=http://127.0.0.1:8000
+GEMINI_API_KEY=
+VERCEL_URL=
+```
+
+---
+
+### 4️⃣ Start the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Your app will be available at:  
+👉 [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧠 Backend Setup (RAG Service)
 
-## Learn More
+### 1️⃣ Navigate to the Backend Folder
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+cd backend
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2️⃣ Create and Activate a Virtual Environment
 
-## Deploy on Vercel
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 3️⃣ Install Dependencies
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
+### 4️⃣ Configure Backend Environment Variables
+
+Create a `.env` file in `/backend` and add:
+
+```env
+OPENAI_API_KEY=
+OPENAI_EMBED_MODEL=text-embedding-3-large
+OPENAI_CHAT_MODEL=gpt-4o-mini
+```
+
+---
+
+### 5️⃣ Run the Data Embedding Pipeline
+
+```bash
+python harvest.py
+python embed_local.py
+```
+
+---
+
+### 6️⃣ Launch the RAG Service
+
+```bash
+uvicorn rag_service:app --reload
+```
+
+---
+
+## 🧪 Testing & Example Commands
+
+### ✅ Health Check
+
+```bash
+curl -s http://127.0.0.1:8000/health | jq .
+```
+
+---
+
+### 💬 Example Query
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/ask   -H "Content-Type: application/json"   -d '{"question":"How does spaceflight impact immune response in astronauts?"}' | jq .
+```
+
+---
+
+### 🧬 Another Example Query
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/ask   -H "Content-Type: application/json"   -d '{"question":"What are the main effects of microgravity on cardiovascular remodeling?"}' | jq .
+```
+
+---
+
+## 📁 Project Structure
+
+```
+spacebio-knowledge-library/
+├── app/
+│   ├── page.tsx
+│   ├── layout.tsx
+│   ├── globals.css
+│   └── api/
+├── backend/
+│   ├── rag_service.py
+│   ├── harvest.py
+│   ├── embed_local.py
+│   ├── query_local.py
+│   └── requirements.txt
+├── public/
+├── .env.example
+└── README.md
+```
+
+---
+
+## 🔭 Example Workflow
+
+1. Enter a query such as  
+   **“How does microgravity affect bone density in astronauts?”**  
+2. Use **Ask AI** for an intelligent, source-based explanation.  
+3. Switch to **Visualize Mode** to generate an educational illustration.  
+4. Download or share your AI-generated educational manga panels.
+
+---
+
+## 👥 Contributors & Credits
+
+Developed by **Vincent Truong** and team.  
+Powered by **NASA Open Data**, **FastAPI**, and **OpenAI GPT Models**.
+
+---
+
+## 📜 License
+
+This project is released under the **MIT License**.  
+Feel free to use, modify, and contribute for educational and research purposes.
+
+---
+
+> “Science is the poetry of reality.” — Richard Dawkins
