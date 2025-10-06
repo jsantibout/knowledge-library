@@ -191,7 +191,6 @@ spacebio-knowledge-library/
 
 ## Contributors & Credits
 
-Developed by **Vincent Truong** and team.  
 Powered by **NASA Open Data**, **FastAPI**, and **OpenAI GPT Models**.
 
 ---
